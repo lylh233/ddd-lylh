@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lylh.repository.dao.UserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.lylh.repository.entity.UserDO">
+        <id column="id" property="id" />
+        <result column="uuid" property="uuid" />
+        <result column="username" property="username" />
+        <result column="password" property="password" />
+        <result column="name" property="name" />
+        <result column="user_type" property="userType" />
+        <result column="created" property="created" />
+        <result column="last_modified" property="lastModified" />
+    </resultMap>
+
+    <sql id="user_column_list">
+        user.uuid, user.name, user.username, user.user_type, user.created, user.last_modified
+    </sql>
+
+    <sql id="queryUserFilter">
+        <if test="filter.name != null and filter.name != ''">
+           and user.name like concat('%',#{filter.name},'%')
+        </if>
+        <if test="filter.useType != null">
+            and user.user_type = #{filter.userType}
+        </if>
+    </sql>
+
+    <select id="queryUserList" parameterType="map" resultMap="BaseResultMap">
+        select <include refid="user_column_list"></include>
+        from user
+        <where>
+            <include refid="queryUserFilter"></include>
+        </where>
+    </select>
+
+    <select id="queryUserCount" parameterType="map" resultType="java.lang.Long">
+        select count(1)
+        from user
+        <where>
+            <include refid="queryUserFilter"></include>
+        </where>
+    </select>
+
+</mapper>

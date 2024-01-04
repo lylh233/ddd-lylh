@@ -1,0 +1,25 @@
+server:
+  port: 8801
+
+spring:
+  application:
+    name: lylh
+    version: @project.version@
+  profiles:
+    debug: true
+    active: idea
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baselineOnMigrate: true
+
+lylh:
+  auth:
+    verifyToken: true
+
+
+mybatis-plus:
+  mapper-locations: classpath:mappers/*.xml
+  type-aliases-package: com.lylh.repository.entity
