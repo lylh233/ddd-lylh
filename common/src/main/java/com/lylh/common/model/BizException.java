@@ -9,6 +9,11 @@ public class BizException extends RuntimeException {
         this.code = responseCode.getCode();
     }
 
+    public BizException(ResponseCode responseCode, String... strings) {
+        super(responseCode.getMessage() + ": " + String.join(",", strings));
+        this.code = responseCode.getCode();
+    }
+
     public int getCode() {
         return code;
     }

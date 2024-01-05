@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lylh.repository.dao.GroupMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.lylh.repository.entity.GroupDO">
+        <id column="id" property="id" />
+        <result column="uuid" property="uuid" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="team_uuid" property="teamUuid" />
+        <result column="group_assignment_uuid" property="groupAssignmentUuid" />
+        <result column="created" property="created" />
+        <result column="last_modified" property="lastModified" />
+    </resultMap>
+
+    <sql id="group_column_list">
+        group.uuid, group.serial_number, group.team_uuid, group.group_assignment_uuid, group.created, group.last_modified
+    </sql>
+
+    <sql id="group_with_assignment_column_list">
+        <include refid="group_column_list"></include>, group_assignment.name as groupAssignmentName
+    </sql>
+
+    <select id="getGroupWithAssignmentByTeamUuid" parameterType="map" resultType="GroupExtDO">
+        select <include refid="group_with_assignment_column_list"></include>
+        from group
+        inner join group_assignment on group_assignment.uuid = group.group_assignment_uuid
+        <where>
+            group.team_uuid = #{teamUuid}
+        </where>
+    </select>
+</mapper>

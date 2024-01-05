@@ -9,6 +9,7 @@ public enum ResponseCode {
     NO_PERMISSION(403, "无权限!"),
     FAIL(500, "请求失败!"),
 
+    NO_DATA(40001, "数据不存在"),
     NO_USER_DATA(40001, "用户名不存在。"),
     DUPLICATE_USER_NAME(40002, "用户名称重复。"),
     PASSWORD_ERROR(40003, "用户密码错误。"),

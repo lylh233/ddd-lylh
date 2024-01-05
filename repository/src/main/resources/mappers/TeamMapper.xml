@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lylh.repository.dao.TeamMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.lylh.repository.entity.TeamDO">
+        <id column="id" property="id" />
+        <result column="uuid" property="uuid" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="description" property="description" />
+        <result column="created" property="created" />
+        <result column="last_modified" property="lastModified" />
+    </resultMap>
+
+    <sql id="team_column_list">
+        team.uuid, team.name, team.serial_number, team.description, team.created, team.last_modified
+    </sql>
+
+
+</mapper>

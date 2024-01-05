@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
     public void updateUser(UserDTO userDTO) {
         UserDO userDO = mapperUserService.getByUuid(userDTO.getUuid());
         if (userDO == null) {
-            throw new BizException(ResponseCode.NO_USER_DATA);
+            throw new BizException(ResponseCode.NO_DATA);
         }
 
         if (!userDTO.getUsername().equals(userDO.getUsername())) {

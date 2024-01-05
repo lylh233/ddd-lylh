@@ -33,6 +33,9 @@
         <where>
             <include refid="queryUserFilter"></include>
         </where>
+        <if test="page != null">
+            limit #{page.offset}, #{page.size}
+        </if>
     </select>
 
     <select id="queryUserCount" parameterType="map" resultType="java.lang.Long">

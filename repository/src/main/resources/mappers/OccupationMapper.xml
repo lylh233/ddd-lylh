@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lylh.repository.dao.OccupationMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.lylh.repository.entity.OccupationDO">
+        <id column="id" property="id" />
+        <result column="uuid" property="uuid" />
+        <result column="name" property="name" />
+        <result column="created" property="created" />
+        <result column="last_modified" property="lastModified" />
+    </resultMap>
+
+    <sql id="occupation_column_list">
+        occupation.uuid, occupation.name, occupation.created, occupation.last_modified
+    </sql>
+
+
+</mapper>

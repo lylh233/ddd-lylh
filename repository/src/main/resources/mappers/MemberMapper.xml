@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lylh.repository.dao.MemberMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.lylh.repository.entity.MemberDO">
+        <id column="id" property="id" />
+        <result column="uuid" property="uuid" />
+        <result column="name" property="name" />
+        <result column="position" property="position" />
+        <result column="occupation_uuid" property="occupationUuid" />
+        <result column="created" property="created" />
+        <result column="last_modified" property="lastModified" />
+    </resultMap>
+
+    <sql id="member_column_list">
+        member.uuid, member.name, member.position, member.position, member.occupation_uuid, member.created, member.last_modified
+    </sql>
+
+    <sql id="member_query_column_list">
+        <include refid="member_column_list"></include>, occupation.name as occupationName
+    </sql>
+
+    <sql id="member_with_group_column_list">
+        <include refid="member_query_column_list"></include>, group.uuid as groupUuid
+    </sql>
+
+    <sql id="queryMemberFilter">
+        <if test="filter.name != null and filter.name != ''">
+            and member.name like concat('%',#{filter.name},'%')
+        </if>
+        <if test="filter.position != null and filter.position != ''">
+            and member.position = #{filter.position}
+        </if>
+        <if test="filter.occupationUuid != null and filter.occupationUuid != ''">
+            and member.occupation_uuid = #{filter.occupationUuid}
+        </if>
+        <if test="filter.occupationUuid != null and filter.occupationUuid != ''">
+            and member.occupation_uuid = #{filter.occupationUuid}
+        </if>
+        <if test="filter.keyName != null and filter.keyName != ''">
+            and (member.name LIKE CONCAT('%',#{filter.keyName},'%') or occupation.name LIKE CONCAT('%',#{filter.keyName},'%'))
+        </if>
+    </sql>
+
+    <select id="queryMemberList" parameterType="map" resultType="MemberExtDO">
+        select <include refid="member_query_column_list"></include>
+        from member
+            inner join occupation on occupation.uuid = member.occupation_uuid
+        <where>
+            <include refid="queryMemberFilter"></include>
+        </where>
+        <if test="page != null">
+            limit #{page.offset}, #{page.size}
+        </if>
+    </select>
+
+    <select id="queryMemberCount" parameterType="map" resultType="java.lang.Long">
+        select count(1)
+        from member
+        inner join occupation on occupation.uuid = member.occupation_uuid
+        <where>
+            <include refid="queryMemberFilter"></include>
+        </where>
+    </select>
+
+    <select id="queryMemberList" parameterType="map" resultType="MemberExtDO">
+        select <include refid="member_query_column_list"></include>
+        from member
+        inner join occupation on occupation.uuid = member.occupation_uuid
+        <where>
+            <include refid="queryMemberFilter"></include>
+        </where>
+        <if test="limit != null">
+            limit #{limit}
+        </if>
+    </select>
+
+    <select id="getMemberWithGroupListByGroupUuids" parameterType="map" resultType="MemberExtDO">
+        select <include refid="member_with_group_column_list"></include>
+        from member
+        inner join occupation on occupation.uuid = member.occupation_uuid
+        inner join group_member_association on groupMemberAssociation.member_uuid = member.uuid
+        <where>
+            group_member_association.group_uuid in
+            <foreach collection="groupUuids" item="groupUuid" index="index" open="(" close=")" separator=",">
+                #{groupUuid}
+            </foreach>
+        </where>
+    </select>
+
+</mapper>
