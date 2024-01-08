@@ -5,7 +5,6 @@ import com.lylh.biz.convert.MemberConvert;
 import com.lylh.biz.convert.TeamConvert;
 import com.lylh.biz.model.dto.TeamDTO;
 import com.lylh.biz.model.vo.GroupWithMemberVO;
-import com.lylh.biz.model.vo.MemberVO;
 import com.lylh.biz.model.vo.TeamVO;
 import com.lylh.biz.model.vo.TeamWithGroupVO;
 import com.lylh.biz.service.TeamService;
@@ -15,7 +14,6 @@ import com.lylh.repository.biz.MapperGroupService;
 import com.lylh.repository.biz.MapperMemberService;
 import com.lylh.repository.biz.MapperTeamService;
 import com.lylh.repository.entity.GroupDO;
-import com.lylh.repository.entity.MemberDO;
 import com.lylh.repository.entity.TeamDO;
 import com.lylh.repository.entity.ext.GroupExtDO;
 import com.lylh.repository.entity.ext.MemberExtDO;
@@ -26,7 +24,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,31 +90,8 @@ public class TeamServiceImpl implements TeamService {
         TeamWithGroupVO teamWithGroupVO = (TeamWithGroupVO) getByUuid(uuid);
         //2、取team下的groups，并携带assignment信息
         List<GroupExtDO> groupExtDOList = mapperGroupService.getGroupWithAssignmentByTeamUuid(teamWithGroupVO.getUuid());
-        if (! CollectionUtils.isEmpty(groupExtDOList)) {
-            List<GroupWithMemberVO> groupWithMemberVOList = groupExtDOList.stream()
-                    .map(GroupConvert::toGroupWithMemberVO).collect(Collectors.toList());
-
-            //3、取groups下的所有members
-            List<String> groupUuids = groupExtDOList.stream()
-                    .map(GroupDO::getUuid).collect(Collectors.toList());
-            List<MemberExtDO> memberExtDOList = mapperMemberService.getMemberWithGroupListByGroupUuids(groupUuids);
-
-            //4、将携带assignment信息的memberList，塞进对应group -> 做map减少循环
-            if (! CollectionUtils.isEmpty(memberExtDOList)) {
-                Map<String, List<MemberExtDO>> memberGroupMap = memberExtDOList.stream()
-                        .collect(Collectors.groupingBy(MemberExtDO::getGroupUuid));
-                groupWithMemberVOList.forEach(groupWithMemberVO -> {
-                    List<MemberExtDO> memberExtDOsForGroup = memberGroupMap.get(groupWithMemberVO.getUuid());
-
-                    if (!CollectionUtils.isEmpty(memberExtDOsForGroup)) {
-                        groupWithMemberVO.setMemberList(memberExtDOsForGroup.stream()
-                                .map(MemberConvert::toMemberVO).collect(Collectors.toList()));
-                    }
-                });
-            }
-            //5、将携带member信息的groups，塞进team
-            teamWithGroupVO.setGroupList(groupWithMemberVOList);
-        }
+        //3、处理team下的groupMember信息
+        dealTeamGroupWithMember(Collections.singletonList(teamWithGroupVO), groupExtDOList);
         return teamWithGroupVO;
     }
 
@@ -129,5 +103,54 @@ public class TeamServiceImpl implements TeamService {
         }
         return teamDOList.stream()
                 .map(TeamConvert::toTeamVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TeamWithGroupVO> listTeamWithGroup(Integer limit) {
+        //1、取team
+        List<TeamWithGroupVO> teamWithGroupVOList = listTeam(limit).stream()
+                .filter(item -> item instanceof TeamWithGroupVO)
+                .map(item -> (TeamWithGroupVO) item).collect(Collectors.toList());
+        //2、取team下的groups，并携带assignment信息
+        List<GroupExtDO> groupExtDOList = mapperGroupService.getGroupWithAssignmentByTeamUuids(teamWithGroupVOList.stream()
+                .map(TeamWithGroupVO::getUuid).collect(Collectors.toList()));
+        //3、处理teams下的groupMember信息
+        dealTeamGroupWithMember(teamWithGroupVOList, groupExtDOList);
+        return teamWithGroupVOList;
+
+    }
+
+    private void dealTeamGroupWithMember(List<TeamWithGroupVO> teamWithGroupVOList, List<GroupExtDO> groupExtDOList) {
+        if (CollectionUtils.isEmpty(teamWithGroupVOList) || CollectionUtils.isEmpty(groupExtDOList)) {
+            return;
+        }
+        List<GroupWithMemberVO> groupWithMemberVOList = groupExtDOList.stream()
+                .map(GroupConvert::toGroupWithMemberVO).collect(Collectors.toList());
+
+        //1、取groups下的所有members
+        List<String> groupUuids = groupExtDOList.stream()
+                .map(GroupDO::getUuid).collect(Collectors.toList());
+        List<MemberExtDO> memberExtDOList = mapperMemberService.getMemberWithGroupListByGroupUuids(groupUuids);
+
+        //2、将携带assignment信息的memberList，塞进对应group -> 做map减少循环
+        if (! CollectionUtils.isEmpty(memberExtDOList)) {
+            Map<String, List<MemberExtDO>> memberGroupMap = memberExtDOList.stream()
+                    .collect(Collectors.groupingBy(MemberExtDO::getGroupUuid));
+            groupWithMemberVOList.forEach(groupWithMemberVO -> {
+                List<MemberExtDO> memberExtDOsForGroup = memberGroupMap.get(groupWithMemberVO.getUuid());
+
+                if (!CollectionUtils.isEmpty(memberExtDOsForGroup)) {
+                    groupWithMemberVO.setMemberList(memberExtDOsForGroup.stream()
+                            .map(MemberConvert::toMemberVO).collect(Collectors.toList()));
+                }
+            });
+        }
+
+        //3、将携带member信息的groups，塞进team -> 做map减少循环
+        Map<String, List<GroupWithMemberVO>> groupWithMemberVOMap = groupWithMemberVOList.stream()
+                        .collect(Collectors.groupingBy(GroupWithMemberVO::getTeamUuid));
+        teamWithGroupVOList.forEach(teamWithGroupVO -> {
+            teamWithGroupVO.setGroupList(groupWithMemberVOMap.get(teamWithGroupVO.getUuid()));
+        });
     }
 }

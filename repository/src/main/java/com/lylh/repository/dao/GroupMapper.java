@@ -10,4 +10,6 @@ import java.util.List;
 public interface GroupMapper extends BaseMapper<GroupDO> {
 
     List<GroupExtDO> getGroupWithAssignmentByTeamUuid(@Param("teamUuid") String teamUuid);
+
+    List<GroupExtDO> getGroupWithAssignmentByTeamUuids(@Param("teamUuids") List<String> teamUuids);
 }

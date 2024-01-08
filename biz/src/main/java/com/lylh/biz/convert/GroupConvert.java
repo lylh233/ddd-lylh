@@ -6,6 +6,8 @@ import com.lylh.common.utils.UUIDUtils;
 import com.lylh.repository.entity.GroupDO;
 import com.lylh.repository.entity.ext.GroupExtDO;
 
+import java.util.Optional;
+
 public class GroupConvert {
 
     public static GroupDO toGroupDO(GroupDTO groupDTO, String teamUuid) {
@@ -13,7 +15,7 @@ public class GroupConvert {
         groupDO.setUuid(UUIDUtils.simpleUUID());
         groupDO.setGroupAssignmentUuid(groupDTO.getGroupAssignmentUuid());
         groupDO.setSerialNumber(groupDTO.getSerialNumber());
-        groupDO.setTeamUuid(teamUuid);
+        groupDO.setTeamUuid(Optional.ofNullable(teamUuid).orElse(groupDTO.getTeamUuid()));
 
         return groupDO;
     }

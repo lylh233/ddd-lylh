@@ -29,4 +29,16 @@
             group.team_uuid = #{teamUuid}
         </where>
     </select>
+
+    <select id="getGroupWithAssignmentByTeamUuids" parameterType="map" resultType="GroupExtDO">
+        select <include refid="group_with_assignment_column_list"></include>
+        from group
+        inner join group_assignment on group_assignment.uuid = group.group_assignment_uuid
+        <where>
+            group.team_uuid in
+            <foreach collection="teamUuids" item="teamUuid" index="index" open="(" close=")" separator=",">
+                #{teamUuid}
+            </foreach>
+        </where>
+    </select>
 </mapper>

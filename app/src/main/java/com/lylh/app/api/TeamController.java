@@ -62,10 +62,15 @@ public class TeamController {
         return ResultUtils.ok(teamWithGroupVO);
     }
 
-    // todo
     @GetMapping("/list")
     public CommonResult<?> listTeam(@RequestParam(value = "limit") Integer limit) {
         return ResultUtils.ok(teamService.listTeam(limit));
     }
+
+    @GetMapping("/listWithGroup")
+    public CommonResult<?> listTeamWithGroup(@RequestParam(value = "limit") Integer limit) {
+        return ResultUtils.ok(teamService.listTeamWithGroup(limit));
+    }
+
 
 }

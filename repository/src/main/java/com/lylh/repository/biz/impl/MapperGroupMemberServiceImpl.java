@@ -16,4 +16,11 @@ public class MapperGroupMemberServiceImpl extends ServiceImpl<GroupMemberAssocia
                 .eq(GroupMemberAssociationDO::getMemberUuid, memberUuid);
         baseMapper.delete(queryWrapper);
     }
+
+    @Override
+    public void deleteByGroupUuid(String groupUuid) {
+        LambdaQueryWrapper<GroupMemberAssociationDO> queryWrapper = new LambdaQueryWrapper<GroupMemberAssociationDO>()
+                .eq(GroupMemberAssociationDO::getGroupUuid, groupUuid);
+        baseMapper.delete(queryWrapper);
+    }
 }

@@ -23,4 +23,6 @@ public interface TeamService {
     TeamWithGroupVO getTeamWithGroupByUuid(String uuid);
 
     List<TeamVO> listTeam(Integer limit);
+
+    List<TeamWithGroupVO> listTeamWithGroup(Integer limit);
 }
