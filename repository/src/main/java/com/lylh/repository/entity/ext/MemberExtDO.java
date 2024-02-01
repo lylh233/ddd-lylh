@@ -10,6 +10,8 @@ public class MemberExtDO extends MemberDO {
 
     private String occupationName;
 
+    private String occupationColor;
+
     private String groupUuid;
 
 }

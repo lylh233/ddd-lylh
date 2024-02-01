@@ -18,7 +18,7 @@
     </sql>
 
     <sql id="member_query_column_list">
-        <include refid="member_column_list"></include>, occupation.name as occupationName
+        <include refid="member_column_list"></include>, occupation.name as occupationName, occupation.color as occupationColor
     </sql>
 
     <sql id="member_with_group_column_list">

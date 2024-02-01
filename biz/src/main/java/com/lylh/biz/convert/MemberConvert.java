@@ -13,6 +13,7 @@ public class MemberConvert {
         memberDO.setUuid(UUIDUtils.simpleUUID());
         memberDO.setName(memberDTO.getName());
         memberDO.setPosition(memberDTO.getPosition());
+        memberDO.setOccupationUuid(memberDTO.getOccupationUuid());
         return memberDO;
     }
 
@@ -34,6 +35,7 @@ public class MemberConvert {
         memberVO.setOccupationUuid(memberExtDO.getOccupationUuid());
 
         memberVO.setOccupationName(memberExtDO.getOccupationName());
+        memberVO.setOccupationColor(memberExtDO.getOccupationColor());
         return memberVO;
     }
 }

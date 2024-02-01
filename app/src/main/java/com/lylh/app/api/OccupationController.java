@@ -43,7 +43,7 @@ public class OccupationController {
     }
 
     @GetMapping("/list")
-    public CommonResult<?> listOccupation(@RequestParam(value = "limit") Integer limit) {
+    public CommonResult<?> listOccupation(@RequestParam(value = "limit", required = false) Integer limit) {
         return ResultUtils.ok(occupationService.listOccupation(limit));
     }
 

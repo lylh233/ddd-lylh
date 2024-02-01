@@ -14,4 +14,7 @@ public class TeamDTO {
     private String description;
 
     private List<GroupDTO> groupList;
+
+    public TeamDTO() {}
+
 }

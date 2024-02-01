@@ -5,6 +5,13 @@ import lombok.Data;
 
 import java.util.Objects;
 
+/**
+ * 用户
+ *
+ * @author lylh
+ * @version 1.0.0
+ * @since 2024-01-22
+ */
 @Data
 @TableName("user")
 public class UserDO {

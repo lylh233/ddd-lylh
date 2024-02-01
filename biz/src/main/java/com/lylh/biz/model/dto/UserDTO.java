@@ -15,4 +15,6 @@ public class UserDTO {
     @NonNull
     private Integer userType;
 
+    public UserDTO() {}
+
 }

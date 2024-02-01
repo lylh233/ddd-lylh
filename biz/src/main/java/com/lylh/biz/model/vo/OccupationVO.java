@@ -9,4 +9,6 @@ public class OccupationVO {
 
     private String name;
 
+    private String color;
+
 }

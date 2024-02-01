@@ -15,4 +15,6 @@ public class MemberVO {
 
     private String occupationName;
 
+    private String occupationColor;
+
 }

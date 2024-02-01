@@ -11,6 +11,7 @@ public class OccupationConvert {
         OccupationDO occupationDO = new OccupationDO();
         occupationDO.setUuid(UUIDUtils.simpleUUID());
         occupationDO.setName(occupationDTO.getName());
+        occupationDO.setColor(occupationDTO.getColor());
         return occupationDO;
     }
 
@@ -18,6 +19,7 @@ public class OccupationConvert {
         OccupationVO occupationVO = new OccupationVO();
         occupationVO.setUuid(occupationDO.getUuid());
         occupationVO.setName(occupationDO.getName());
+        occupationVO.setColor(occupationDO.getColor());
         return occupationVO;
     }
 }

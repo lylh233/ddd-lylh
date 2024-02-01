@@ -14,6 +14,8 @@ spring:
   flyway:
     enabled: true
     baselineOnMigrate: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE #jackson全局转为下划线，参照PropertyNamingStrategy.class
 
 lylh:
   auth:

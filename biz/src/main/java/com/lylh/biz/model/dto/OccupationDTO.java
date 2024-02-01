@@ -10,4 +10,8 @@ public class OccupationDTO {
     @NonNull
     private String name;
 
+    private String color;
+
+    public OccupationDTO() {}
+
 }

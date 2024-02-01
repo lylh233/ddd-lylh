@@ -12,4 +12,6 @@ public class GroupDTO {
     private String teamUuid;
 
     private String groupAssignmentUuid;
+
+    public GroupDTO() {}
 }

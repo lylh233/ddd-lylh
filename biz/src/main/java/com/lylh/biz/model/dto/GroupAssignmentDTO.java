@@ -11,4 +11,6 @@ public class GroupAssignmentDTO {
 
     private String description;
 
+    public GroupAssignmentDTO() {}
+
 }

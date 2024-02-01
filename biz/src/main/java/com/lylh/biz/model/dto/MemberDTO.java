@@ -14,4 +14,5 @@ public class MemberDTO {
     @NonNull
     private String occupationUuid;
 
+    public MemberDTO() {}
 }

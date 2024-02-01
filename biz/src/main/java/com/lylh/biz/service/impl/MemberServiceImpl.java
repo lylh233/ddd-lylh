@@ -108,6 +108,7 @@ public class MemberServiceImpl implements MemberService {
 
         OccupationDO occupationDO = mapperOccupationService.getByUuid(memberDO.getOccupationUuid());
         memberVO.setOccupationName(occupationDO.getName());
+        memberVO.setOccupationColor(occupationDO.getColor());
         return memberVO;
     }
 

@@ -2,7 +2,6 @@ package com.lylh.biz.model.common;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,7 +13,6 @@ import java.util.Map;
 @Data
 public class PageListResult<T> extends CommonResult<List<T>>{
 
-    @JsonProperty("page_info")
     private Map<String, Object> pageInfo;
 
     public PageListResult(final IPage<T> page) {
