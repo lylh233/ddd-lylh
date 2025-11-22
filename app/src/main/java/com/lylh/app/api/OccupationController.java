@@ -31,7 +31,7 @@ public class OccupationController {
     }
 
     @PostMapping("/delete")
-    public CommonResult<?>deleteOccupation(String uuid) {
+    public CommonResult<?> deleteOccupation(String uuid) {
         occupationService.delete(uuid);
         return ResultUtils.ok();
     }

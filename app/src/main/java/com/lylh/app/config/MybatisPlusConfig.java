@@ -18,6 +18,7 @@ public class MybatisPlusConfig {
 
         /**
          * 插入数据时，默认插入当前时间做为created，lastModified
+         *
          * @param metaObject metaObject
          */
         @Override
@@ -29,6 +30,7 @@ public class MybatisPlusConfig {
 
         /**
          * 更新数据时，默认插入当前时间做为lastModified
+         *
          * @param metaObject metaObject
          */
         @Override

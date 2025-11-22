@@ -30,7 +30,7 @@ public class GroupAssignmentController {
     }
 
     @PostMapping("/delete")
-    public CommonResult<?>deleteGroupAssignment(String uuid) {
+    public CommonResult<?> deleteGroupAssignment(String uuid) {
         groupAssignmentService.delete(uuid);
         return ResultUtils.ok();
     }

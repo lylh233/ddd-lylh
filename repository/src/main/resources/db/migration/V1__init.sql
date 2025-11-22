@@ -43,7 +43,7 @@ CREATE TABLE `occupation` (
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
 
 -- 4、团队
-CREATE TABLE `member` (
+CREATE TABLE `team` (
                           `id` bigint(20) NOT NULL AUTO_INCREMENT,
                           `uuid` varchar(32) DEFAULT NULL,
                           `name` varchar(50) DEFAULT NULL,

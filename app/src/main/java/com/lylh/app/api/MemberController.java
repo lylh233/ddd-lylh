@@ -52,8 +52,8 @@ public class MemberController {
 
     @GetMapping("/query")
     public PageListResult<?> queryMember(@RequestParam(defaultValue = "{}") String filter,
-                                       @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
-                                       @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
+                                         @RequestParam(value = "page_num", defaultValue = "1") Integer pageNum,
+                                         @RequestParam(value = "page_size", defaultValue = "10") Integer pageSize) {
         return ResultUtils.ok(memberService.queryMember(filter, pageNum, pageSize));
     }
 

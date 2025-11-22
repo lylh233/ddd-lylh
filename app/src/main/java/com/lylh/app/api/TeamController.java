@@ -45,7 +45,7 @@ public class TeamController {
     }
 
     @PostMapping("/delete")
-    public CommonResult<?>deleteTeam(String uuid) {
+    public CommonResult<?> deleteTeam(String uuid) {
         teamService.delete(uuid);
         return ResultUtils.ok();
     }

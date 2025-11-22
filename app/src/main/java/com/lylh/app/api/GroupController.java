@@ -11,9 +11,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/group")
 public class GroupController {
-    
+
     private final GroupService groupService;
-    
+
     public GroupController(GroupService groupService) {
         this.groupService = groupService;
     }
@@ -43,9 +43,9 @@ public class GroupController {
     }
 
     @PostMapping("/delete")
-    public CommonResult<?>deleteGroup(String uuid) {
+    public CommonResult<?> deleteGroup(String uuid) {
         groupService.delete(uuid);
         return ResultUtils.ok();
     }
-    
+
 }
