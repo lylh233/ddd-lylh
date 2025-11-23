@@ -14,9 +14,4 @@ public class UserVO {
     private Integer userType;
 
     private String userTypeDesc;
-
-    private Long created;
-
-    private Long lastModified;
-
 }

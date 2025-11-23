@@ -62,7 +62,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         tokenPayload.remove();
         Long start = (Long) request.getAttribute("StartTime");
-        log.info("请求执行完毕 总耗时:{}", (System.currentTimeMillis() - start));
+        log.info("请求执行完毕 总耗时:{}ms", (System.currentTimeMillis() - start));
     }
 
     public static TokenPayload geTokenPayload() {

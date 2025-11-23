@@ -7,4 +7,4 @@ spring:
 
 logging:
   level:
-    org.springframework.web: info
+    com.lylh.repository.dao: debug

@@ -42,8 +42,6 @@ public class UserConvert {
         userVO.setUserType(userDO.getUserType());
 
         userVO.setUserTypeDesc(UserTypeEnum.parse(userDO.getUserType()).getDesc());
-        userVO.setCreated(userDO.getCreated());
-        userVO.setLastModified(userDO.getLastModified());
         return userVO;
     }
 

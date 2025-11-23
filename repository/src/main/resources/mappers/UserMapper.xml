@@ -20,7 +20,7 @@
 
     <sql id="queryUserFilter">
         <if test="filter.name != null and filter.name != ''">
-           and user.name like concat('%',#{filter.name},'%')
+           and (user.name like concat('%',#{filter.name},'%') or user.username like concat('%',#{filter.name},'%'))
         </if>
         <if test="filter.useType != null">
             and user.user_type = #{filter.userType}
@@ -28,10 +28,10 @@
     </sql>
 
     <select id="queryUserList" parameterType="map" resultMap="BaseResultMap">
-        select <include refid="user_column_list"></include>
+        select <include refid="user_column_list"/>
         from user
         <where>
-            <include refid="queryUserFilter"></include>
+            <include refid="queryUserFilter"/>
         </where>
     </select>
 
@@ -39,7 +39,7 @@
         select count(1)
         from user
         <where>
-            <include refid="queryUserFilter"></include>
+            <include refid="queryUserFilter"/>
         </where>
     </select>
 

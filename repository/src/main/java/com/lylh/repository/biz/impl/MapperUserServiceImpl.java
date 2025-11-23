@@ -52,7 +52,9 @@ public class MapperUserServiceImpl extends ServiceImpl<UserMapper, UserDO> imple
     @Override
     public List<UserDO> getByName(String name) {
         LambdaQueryWrapper<UserDO> queryWrapper = new LambdaQueryWrapper<UserDO>()
-                .eq(UserDO::getName, name);
+                .eq(UserDO::getName, name)
+                .or()
+                .eq(UserDO::getUsername, name);
         return baseMapper.selectList(queryWrapper);
     }
 
