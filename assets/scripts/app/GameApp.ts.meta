@@ -1,0 +1,11 @@
+{
+  "ver": "4.0.24",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "f3a1c0e2-7b54-4d1a-9c88-6e2f0b7a41d3",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "moduleId": "project:///assets/scripts/app/GameApp.ts"
+  }
+}
