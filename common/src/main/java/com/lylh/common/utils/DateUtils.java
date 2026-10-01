@@ -5,9 +5,10 @@ import cn.hutool.core.date.DateUtil;
 public class DateUtils extends DateUtil {
 
     /**
-     * 将毫秒，以x时：x分：x秒形式返回
-     * @param value 毫秒
-     * @return xx:xx:xx
+     * 把耗时格式化成定宽的时分秒，方便日志对齐。不足两位补零。
+     *
+     * @param value 毫秒，null 时原样返回 null
+     * @return HH:mm:ss
      */
     public static String changeMillisecondToTimeStr(Long value) {
         if (value == null) {

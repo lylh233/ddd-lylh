@@ -1,7 +1,14 @@
 package com.lylh.biz.model.enums;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+/**
+ * 用户类型。未知取值回落到无类型，避免接口因为脏数据直接失败。
+ */
 public enum UserTypeEnum {
 
     NULL(0, "无类型"), //未知类型都会返回NULL,无类型‘
@@ -33,6 +40,10 @@ public enum UserTypeEnum {
         }
     }
 
+    /**
+     * @param value 库存的类型值
+     * @return 对应枚举，无法识别时返回 {@link #NULL}
+     */
     public static UserTypeEnum parse(int value) {
         return Optional.ofNullable(map.get(value)).orElse(NULL);
     }

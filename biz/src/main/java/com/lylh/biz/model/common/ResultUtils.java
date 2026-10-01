@@ -3,6 +3,9 @@ package com.lylh.biz.model.common;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lylh.common.model.ResponseCode;
 
+/**
+ * 组装成功和失败响应，避免各接口手写状态码。
+ */
 public class ResultUtils {
 
     public static <T> CommonResult<T> ok(final T data) {

@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.util.Objects;
 
+/**
+ * 用户表行。相等性只看 uuid，同步比对时同一用户不会因为其他字段不同被当成两条。
+ */
 @Data
 @TableName("user")
 public class UserDO {

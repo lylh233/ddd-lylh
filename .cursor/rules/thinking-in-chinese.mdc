@@ -1,0 +1,20 @@
+---
+description: 向用户展示的思考与推理过程使用中文
+alwaysApply: true
+---
+
+# 思考过程使用中文
+
+向用户说明推理、取舍、排查和进度时，使用简体中文。代码、标识符、路径、命令、报错原文保持原样。
+
+```text
+❌ BAD
+I'll check UserServiceImpl first, then trace the mapper call.
+
+✅ GOOD
+先看 UserServiceImpl，再顺着 mapper 调用往下追。
+```
+
+- 进度更新、方案比较、结论前的依据，都用中文写清楚。
+- 用户可见的最终答复同样用中文；仅在引用代码、配置键、日志或命令时保留英文。
+- 不要把推理拆成中英夹杂的短句，除非夹杂的是必须保留的技术名词。

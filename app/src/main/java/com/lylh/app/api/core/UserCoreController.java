@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 内部按姓名查用户。类上跳过登录校验，只给服务间调用，不对外暴露凭据。
+ */
 @IgnorePermission
 @RestController
 @RequestMapping("/api/core/user")

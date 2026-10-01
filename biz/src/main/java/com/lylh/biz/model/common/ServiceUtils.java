@@ -4,25 +4,42 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.lylh.biz.model.vo.UserVO;
 import com.lylh.repository.biz.model.page.MapperPage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
+/**
+ * 分页和对象比对的公共计算。页大小在这里封顶，避免每个查询各自放行超大页。
+ */
 @Slf4j
 public class ServiceUtils {
 
-    public final static Integer PAGE_NUM = 1;
-    public final static Integer PAGE_SIZE = 20;
+    public static final Integer PAGE_NUM = 1;
+    public static final Integer PAGE_SIZE = 20;
+    /** 单页上限，防止一次查出过多数据。 */
+    public static final Integer MAX_PAGE_SIZE = 200;
 
-
+    /**
+     * 非法页码和页大小回退到默认值，超过上限时截断。
+     *
+     * @param current 页码，从 1 开始
+     * @param size    每页条数
+     * @param <T>     记录类型
+     * @return 已校正的分页对象
+     */
     public static <T> Page<T> toPage(Integer current, Integer size) {
-        return new Page<>(Optional.ofNullable(current).orElse(PAGE_NUM),
-                Optional.ofNullable(size).map(v -> Math.max(0, v)).orElse(PAGE_SIZE));
+        int pageNum = current == null || current < 1 ? PAGE_NUM : current;
+        int pageSize = size == null || size < 1 ? PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
+        return new Page<>(pageNum, pageSize);
     }
 
     public static <T> Page<T> getPage(Page<T> page, List<T> data, long count) {
@@ -45,42 +62,30 @@ public class ServiceUtils {
      * @return 修改的对象属性值名称集合
      */
     public static List<String> getChangeList(Object oldObject, Object newObject) {
-        //修改的对象属性值名称集合
         List<String> changeList = new ArrayList<>();
-        //根据对象获取属性值名称
-        String[] filedNameArray = getFieldName(oldObject);
-        //对比两个对象属性值是否相等
-        int i = 0;
-        while (i < filedNameArray.length) {
-            String fieldName = filedNameArray[i];     //遍历所有属性
-            //忽略版本对比
-            if ("serialVersionUID".equals(fieldName)) {
-                i++;
-                continue;
-            }
-
-            Object valueOld = getFieldValueByName(fieldName, oldObject);//旧对象的值
-            Object valueNew = getFieldValueByName(fieldName, newObject);//新对象的值
-            // 过滤掉更新前后都是空值的情况，此类情况一般是入参与数据库分别为空字符与null
+        if (oldObject == null || newObject == null) {
+            return changeList;
+        }
+        for (String fieldName : getFieldNames(oldObject)) {
+            Object valueOld = getFieldValueByName(fieldName, oldObject);
+            Object valueNew = getFieldValueByName(fieldName, newObject);
+            // 空串和 null 都表示没填，不当成一次修改，避免入参和库里的空值互相误报。
             if (("".equals(valueOld) || valueOld == null) && ("".equals(valueNew) || valueNew == null)) {
-                i++;
                 continue;
             }
-
-            if (valueOld != valueNew && !Objects.equals(valueOld, valueNew)) {
-                //属性值不同 ，记录属性名称
+            if (!Objects.equals(valueOld, valueNew)) {
                 changeList.add(fieldName);
             }
-            i++;
         }
         return changeList;
     }
 
     /**
-     * 根据对象字段名称返回 jsonStr
+     * 只序列化指定字段，避免把整行实体（例如密码）写进快照。
+     *
      * @param object 取值对象
      * @param fields 字段名
-     * @return json
+     * @return json，字段为空时返回 null
      */
     public static String setValueWithFields(Object object, List<String> fields) {
         if (CollectionUtils.isEmpty(fields)) {
@@ -94,15 +99,19 @@ public class ServiceUtils {
     }
 
     /**
-     * 反射获取属性名
-     * @param o obj
-     * @return fieldNames
+     * 取本类和父类的实例字段。getFields 只能看到 public 字段，Lombok 实体的私有属性会全部漏掉。
      */
-    private static String[] getFieldName(Object o) {
-        Field[] fields = o.getClass().getFields(); //getDeclaredFields()不取父类
-        String[] fieldNames = new String[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            fieldNames[i] = fields[i].getName();
+    private static List<String> getFieldNames(Object o) {
+        List<String> fieldNames = new ArrayList<>();
+        Class<?> type = o.getClass();
+        while (type != null && type != Object.class) {
+            for (Field field : type.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers()) || "serialVersionUID".equals(field.getName())) {
+                    continue;
+                }
+                fieldNames.add(field.getName());
+            }
+            type = type.getSuperclass();
         }
         return fieldNames;
     }
@@ -120,7 +129,7 @@ public class ServiceUtils {
             Method method = o.getClass().getMethod(getter);
             return method.invoke(o);
         } catch (Exception e) {
-            log.error("根据属性名获取属性值异常：" + e.getMessage(), e);
+            log.error("根据属性名获取属性值异常, fieldName={}", fieldName, e);
             return null;
         }
     }
@@ -135,7 +144,9 @@ public class ServiceUtils {
      */
     public static <T> void dealSyncSaveOrDeleteList(List<T> syncList, List<T> oldList, List<T> saveList, List<T> deleteList) {
         if (CollectionUtil.isEmpty(syncList)) {
-            deleteList.addAll(oldList);
+            if (!CollectionUtil.isEmpty(oldList)) {
+                deleteList.addAll(oldList);
+            }
             return;
         }
         if (CollectionUtil.isEmpty(oldList)) {

@@ -10,8 +10,15 @@ import com.lylh.common.utils.UUIDUtils;
 import com.lylh.repository.entity.UserDO;
 
 
+/**
+ * 用户对象转换。密码在进入持久层前加密，视图对象不带回密码。
+ */
 public class UserConvert {
 
+    /**
+     * @param userDTO 创建入参
+     * @return 待保存的用户，uuid 在这里生成
+     */
     public static UserDO toUserDO(UserDTO userDTO) {
         UserDO userDO = new UserDO();
         userDO.setUuid(UUIDUtils.simpleUUID());

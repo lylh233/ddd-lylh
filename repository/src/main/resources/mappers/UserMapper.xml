@@ -22,8 +22,9 @@
         <if test="filter.name != null and filter.name != ''">
            and (user.name like concat('%',#{filter.name},'%') or user.username like concat('%',#{filter.name},'%'))
         </if>
+        <!-- 实体字段是 useType。绑定写成 userType 时，类型条件永远传 null。 -->
         <if test="filter.useType != null">
-            and user.user_type = #{filter.userType}
+            and user.user_type = #{filter.useType}
         </if>
     </sql>
 
@@ -33,6 +34,8 @@
         <where>
             <include refid="queryUserFilter"/>
         </where>
+        <!-- offset 由服务层按页码算好。不限制行数时，当页数据会变成全表。 -->
+        limit #{page.offset}, #{page.size}
     </select>
 
     <select id="queryUserCount" parameterType="map" resultType="java.lang.Long">

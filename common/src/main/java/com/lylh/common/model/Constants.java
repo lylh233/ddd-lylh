@@ -1,5 +1,8 @@
 package com.lylh.common.model;
 
+/**
+ * 进程内固定约定。密钥同时参与存量密码和已签发令牌，轮换前必须先迁移数据。
+ */
 public class Constants {
 
     public static final String SECRET_PASSWORD = "1234567890123456";

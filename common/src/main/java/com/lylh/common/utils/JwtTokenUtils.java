@@ -16,9 +16,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * 登录令牌的签发与校验。过期和签名分开判断，调用方才能返回不同错误码。
+ */
 @Slf4j
 public class JwtTokenUtils {
 
+    /**
+     * 只把展示所需字段放进令牌。密码不进入载荷。
+     *
+     * @param tokenPayload 登录用户
+     * @return 签名后的令牌
+     */
     public static String creatToken(TokenPayload tokenPayload) {
         Map<String, Object> map = new HashMap<>();
         map.put(Constants.TOKEN_UUID, tokenPayload.getUuid());
@@ -59,7 +68,9 @@ public class JwtTokenUtils {
         try {
             JWTValidator.of(token).validateDate();
             return true;
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            // 缺失、过期或格式错误都按未通过处理，不把令牌原文打进日志。
+            log.debug("token 未通过有效期校验, reason={}", e.toString());
             return false;
         }
     }

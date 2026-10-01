@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * 用户接口。登录仍走现有地址，避免已接入的调用方失效。
+ */
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -22,6 +25,9 @@ public class UserController {
         this.userService = userService;
     }
 
+    /**
+     * 登录。密码出现在查询参数里，日志侧必须脱敏。
+     */
     @IgnorePermission
     @GetMapping("/login")
     public CommonResult<?> login(@NonNull String username, @NonNull String password) {
