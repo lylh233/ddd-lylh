@@ -9,8 +9,13 @@ import com.lylh.repository.biz.model.page.MapperPage;
 import com.lylh.repository.dao.UserMapper;
 import com.lylh.repository.entity.UserDO;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MapperUserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements MapperUserService {
@@ -56,6 +61,39 @@ public class MapperUserServiceImpl extends ServiceImpl<UserMapper, UserDO> imple
                 .or()
                 .eq(UserDO::getUsername, name);
         return baseMapper.selectList(queryWrapper);
+    }
+
+    private static final int USERNAME_QUERY_BATCH = 500;
+
+    @Override
+    public List<String> listExistingUsernames(Collection<String> usernames) {
+        if (CollectionUtils.isEmpty(usernames)) {
+            return Collections.emptyList();
+        }
+        List<String> existing = new ArrayList<>();
+        List<String> batch = new ArrayList<>(USERNAME_QUERY_BATCH);
+        for (String username : usernames) {
+            batch.add(username);
+            if (batch.size() == USERNAME_QUERY_BATCH) {
+                existing.addAll(selectUsernames(new ArrayList<>(batch)));
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) {
+            existing.addAll(selectUsernames(batch));
+        }
+        return existing;
+    }
+
+    private List<String> selectUsernames(List<String> usernames) {
+        LambdaQueryWrapper<UserDO> wrapper = new LambdaQueryWrapper<UserDO>()
+                .select(UserDO::getUsername)
+                .in(UserDO::getUsername, usernames);
+        List<UserDO> users = baseMapper.selectList(wrapper);
+        if (CollectionUtils.isEmpty(users)) {
+            return Collections.emptyList();
+        }
+        return users.stream().map(UserDO::getUsername).collect(Collectors.toList());
     }
 
 }

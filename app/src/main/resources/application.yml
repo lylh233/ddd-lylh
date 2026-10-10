@@ -1,5 +1,7 @@
 server:
   port: 8801
+  tomcat:
+    connection-timeout: 600000
 
 spring:
   application:
@@ -16,6 +18,10 @@ spring:
     baselineOnMigrate: true
   jackson:
     property-naming-strategy: SNAKE_CASE #jackson全局转为下划线，参照PropertyNamingStrategy.class
+  servlet:
+    multipart:
+      max-file-size: 512MB
+      max-request-size: 512MB
 
 lylh:
   auth:

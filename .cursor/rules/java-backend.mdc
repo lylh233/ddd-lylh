@@ -1,135 +1,132 @@
 ---
-description: Java 后端（Spring Boot 3.x + Java 17）项目编码规范，涵盖分层架构、命名、异常、日志、MyBatis、API 设计、测试与提交约定。生成或修改任何 .java 文件时必须遵循。
+description: 本仓库 Java 后端规范（Spring Boot 2.3 + JDK 8）。生成或修改 .java、Mapper、配置和 pom 时必须遵循现有模块与包结构，不得按更高版本技术栈改写。
 globs: ["**/*.java", "**/*.xml", "**/*.yml", "**/*.yaml", "**/pom.xml"]
 alwaysApply: false
 ---
 
 # Java 后端项目规范
 
-## 一、技术栈（不得擅自替换）
+## 一、技术栈（不得擅自替换或升级）
 
-- JDK 17（LTS），源文件与编译目标均为 17；允许使用 `record`、sealed class、switch 表达式、文本块。
-- Spring Boot 3.2.x + Spring MVC；Web 层不使用 WebFlux，除非明确要求响应式。
-- 构建：Maven（`pom.xml`），依赖版本统一在 `<dependencyManagement>` 声明，子模块不写版本号。
-- 持久层：MyBatis-Plus 3.5.x；连接池 HikariCP；数据库 MySQL 8.0。
-- 参数校验：Jakarta Validation（`@Valid` + 注解），不用手写 if 判空替代。
-- 工具：Lombok（`@Data` 仅用于 DTO/PO，Entity 用 `@Getter @Setter`）、MapStruct（对象转换）、Hutool（仅取必要工具类，不做大范围引入）。
-- 接口文档：springdoc-openapi（Swagger UI 路径 `/swagger-ui.html`）。
+- JDK 8。编译目标为 `1.8`。允许 lambda、Stream、`Optional`、try-with-resources。禁止 `record`、sealed class、switch 表达式、文本块、`var` 以及其他 JDK 9+ 语法。
+- Spring Boot 2.3.x + Spring MVC。Servlet API 使用 `javax.servlet`，不要写成 `jakarta.*`。Web 层不使用 WebFlux。
+- 构建：Maven 多模块。父工程 `ddd-lylh-parent`，模块为 `app`、`biz`、`repository`、`common`。新增第三方依赖的版本写在父 `pom.xml` 的 `<dependencyManagement>`，子模块不重复写版本号。
+- 持久层：MyBatis-Plus 3.4.x；连接池 HikariCP；数据库 MySQL 8.0；结构变更走 Flyway（`repository/src/main/resources/db/migration`）。
+- 工具：Lombok（实体、DTO、VO 沿用现有 `@Data`）、Hutool（只取已有用法，如加密、JWT、ID）、EasyExcel 3.3.x（csv / Excel 导入）、Fastjson 2（仅沿用现有 JSON 解析）。
+- 对象转换放在 `com.lylh.biz.convert`，使用已有静态方法（如 `UserConvert`）。不要引入 MapStruct，不要使用 `BeanUtils.copyProperties`。
+- 当前没有 springdoc / Swagger。不要擅自添加接口文档依赖。
 
 ## 二、分层架构（硬性约束）
 
 ```
-controller  ->  service (接口 + impl)  ->  mapper/repository  ->  DB
-                    |
-                    +-> manager / domain  ->  可复用业务组件、第三方调用
+app.api (Controller)
+    -> biz.service (接口) / biz.service.impl (XxxServiceImpl)
+        -> repository.biz (MapperXxxService) -> repository.dao (Mapper) -> DB
+common：异常、错误码、拦截器、工具，供各模块复用
 ```
 
-- **Controller**：只做参数接收、校验、调用 Service、返回结果。禁止出现业务逻辑、SQL、事务注解、try-catch 兜底。
-- **Service**：业务逻辑唯一入口。接口 `XxxService` + 实现 `XxxServiceImpl` 放在 `service` / `service.impl` 包下。`@Transactional` 只加在 Service 实现类的 public 方法上。
-- **Mapper**：只做数据访问，禁止写业务判断；禁止在 Mapper XML 里做超过 3 表 join。
-- **DO / DTO / VO / Query 分层不得混用**：
-  - `XxxDO`：与数据库表一一对应，仅存在于持久层，**严禁**作为 Controller 出入参。
-  - `XxxDTO`：层间传输对象（含跨服务）。
-  - `XxxVO`：返回给前端的视图对象，字段按需裁剪，敏感字段（手机号、身份证）必须脱敏。
-  - `XxxQuery`：查询条件对象，分页参数继承 `PageQuery`（`pageNum` 从 1 开始，`pageSize` 上限 200）。
-- 对象转换统一走 MapStruct Assembler（`XxxAssembler`），禁止手写大段 `bean.setA(b.getA())`，禁止使用 `BeanUtils.copyProperties`（字段错配无编译期检查）。
+模块职责：
+
+| 模块 | 包 | 放什么 |
+|------|----|--------|
+| `app` | `com.lylh.app.api`、`com.lylh.app.config` | 启动类、Controller、Web / 数据源等配置 |
+| `biz` | `service`、`service.impl`、`model`、`convert` | 业务接口、实现、模型、转换 |
+| `repository` | `entity`、`dao`、`biz` | DO、Mapper、`MapperXxxService` |
+| `common` | `model`、`utils`、`interceptor`、`config` | `BizException`、`ResponseCode`、鉴权、通用工具 |
+
+- **Controller**：只做参数接收、调用 Service、用 `ResultUtils` 返回。禁止业务判断、SQL、事务、try-catch 兜底。
+- **Service**：业务入口。接口 `XxxService` 放在 `com.lylh.biz.service`，实现 `XxxServiceImpl` 放在 `com.lylh.biz.service.impl`。`@Transactional` 只加在实现类的 public 方法上。
+- **`service.impl` 只放实现类**。该目录中每个文件都必须是某个 `XxxService` 的 `XxxServiceImpl`。监听器、校验器、行对象、批次结果、常量、线程池名称等，一律放到与 `service` 同级的 `com.lylh.biz.model` 下，按功能建子包归类。例如导入相关类放在 `com.lylh.biz.model.excel`（`UserImportRow`、`UserImportRowChecker`、`UserImportReadListener`）。`model` 不依赖 `service`；需要回调时在 `model` 中定义窄接口，由 `service.impl` 实现。
+- **repository.biz**：`MapperXxxService` + `impl`，只做数据访问。禁止在这里写登录、重名等业务判断。Mapper XML 禁止超过 3 表 join。
+- **DO / DTO / VO / Query 不得混用**：
+  - `XxxDO`：在 `com.lylh.repository.entity`，对应一张表。禁止作为 Controller 出入参。
+  - `XxxDTO`：`com.lylh.biz.model.dto`，入参或层间传输。
+  - `XxxVO`：`com.lylh.biz.model.vo`，返回给调用方。密码等敏感字段不要出现在 VO 中。
+  - `XxxQuery` / Filter：查询条件。`biz` 用 `model.query`，持久层筛选用 `repository.biz.model.filters`。
+- 已有模型子包：`dto`、`vo`、`query`、`enums`、`excel`、`common`。新功能沿用这些目录；只有现有目录都装不下时才新建功能包，且不要再建 `util` 这类同义包。
 
 ## 三、命名规范
 
 | 对象 | 规则 | 示例 |
 |------|------|------|
-| 包名 | 全小写，不用下划线 | `com.example.order` |
-| 类名 | UpperCamelCase，见名知义 | `OrderRefundServiceImpl` |
-| 方法/变量 | lowerCamelCase，动词开头 | `calculateTaxAmount` |
-| 常量 | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
-| 布尔变量 | 不加 `is` 前缀（避免序列化歧义） | `deleted` 而非 `isDeleted` |
-| 数据库表 | `t_` 前缀 + snake_case | `t_order_item` |
-| 数据库字段 | snake_case；禁用驼峰 | `create_time` |
-| Mapper 方法 | 查询 `select/count/list`、插入 `insert`、更新 `update`、删除 `delete` | `listByUserId` |
-| RESTful URL | 小写 + 中划线，资源用复数名词 | `GET /api/v1/order-items` |
-| 枚举类 | 后缀 `Enum`，值全大写 | `PayStatusEnum.PAY_SUCCESS` |
+| 包名 | 全小写，不用下划线 | `com.lylh.biz.model.excel` |
+| 类名 | UpperCamelCase | `UserImportServiceImpl` |
+| 方法/变量 | lowerCamelCase，动词开头 | `importUsers` |
+| 常量 | UPPER_SNAKE_CASE | `BATCH_SIZE` |
+| 布尔变量 | 不加 `is` 前缀 | `deleted` 而非 `isDeleted` |
+| 数据库表 / 字段 | snake_case | `user_import_task`、`last_modified` |
+| Mapper 方法 | 查询 `select/list/count`、插入 `insert`、更新 `update`、删除 `delete` | `listExistingUsernames` |
+| URL | 小写，沿用现有 `/api` 前缀 | `POST /api/user/import` |
+| 枚举 | 后缀 `Enum` | `UserImportStatusEnum` |
 
-禁止：拼音命名、缩写自造词（除 `id`/`url`/`dto` 等通用缩写）、`temp`/`test`/`data1` 之类无语义命名。
+禁止：拼音命名、自造缩写（`id` / `url` / `dto` 除外）、`temp` / `data1` 这类无语义命名。
 
 ## 四、API 设计
 
-- 统一前缀 `/api/v1`，版本变更走新路径，不做破坏性原地修改。
-- HTTP 语义：查询 `GET`、创建 `POST`、全量更新 `PUT`、部分更新 `PATCH`、删除 `DELETE`。禁止 `GET /deleteUser`。
-- 统一响应体 `Result<T>`，字段固定为 `code` / `message` / `data` / `traceId`；`Result.success(data)`、`Result.error(code, msg)` 两个静态方法构造。
-- 成功 `code = "0"`；业务错误码 5 位：`模块(2) + 错误(3)`，如 `10001`。错误码集中定义在 `BizErrorEnum`，禁止散落魔法字符串。
-- 分页返回统一 `PageResult<T>`（`total` / `list` / `pageNum` / `pageSize`），禁止返回 MyBatis-Plus 的 `IPage` 给前端。
-- 入参：`GET` 用 `@RequestParam` 或 Query 对象；`POST/PUT` 用 `@RequestBody` + `@Valid`。禁止用 `Map<String, Object>` 接收请求体。
-- 时间字段统一 `yyyy-MM-dd HH:mm:ss`（`@JsonFormat`），时区 `Asia/Shanghai`；金额单位「分」用 `Long`，单位「元」用 `BigDecimal`。
+- 前缀沿用 `/api`，不要新开 `/api/v1`。版本若要破坏性变更，再增加新路径，不改已有地址的含义。
+- HTTP 语义：查询 `GET`、创建和导入 `POST`、全量更新 `PUT`、部分更新 `PATCH`、删除 `DELETE`。已有登录接口保持原样，不要在无关改动里改路径。
+- 响应使用 `CommonResult<T>`（`code` / `msg` / `data`）和分页用的 `PageListResult`。用 `ResultUtils.ok` / `ResultUtils.error` 构造。不要新建 `Result`，不要把 MyBatis-Plus 的 `IPage` 直接返回给调用方。
+- 成功码使用 `ResponseCode.SUCCESS`（当前为 `200`）。业务错误码集中定义在 `com.lylh.common.model.ResponseCode`，禁止在业务代码里写死数字。
+- 入参：`GET` 用 `@RequestParam` 或 Query 对象；`POST` JSON 用 `@RequestBody`。文件上传用 `MultipartFile`。禁止用 `Map<String, Object>` 接收请求体。
+- 库表时间用毫秒时间戳（`created`、`last_modified`，`bigint`）。金额若出现：分为 `Long`，元为 `BigDecimal`。
 
 ## 五、异常处理
 
-- 业务异常统一抛 `BizException(BizErrorEnum)`，不返回错误码字段给 Controller。
-- 全局唯一兜底：`GlobalExceptionHandler`（`@RestControllerAdvice`）处理 `BizException`、`MethodArgumentNotValidException`、`Exception` 三类。
-- **禁止**：
-  - `catch (Exception e) {}` 空捕获，或 `e.printStackTrace()`。
-  - 在循环内 try-catch 吞掉异常继续执行。
-  - 用异常做流程控制（如用 `NoSuchElementException` 判断业务分支）。
-  - finally 块中 return。
-- 对外部三方调用（HTTP/MQ/RPC）必须捕获并转换为 `BizException`，同时保留原始异常作为 cause：`throw new BizException(..., e)`。
-- 资源关闭一律用 try-with-resources。
+- 业务失败抛 `BizException(ResponseCode)`；需要保留原因时使用 `BizException(ResponseCode, cause)`。不要把错误码字段交给 Controller 组装。
+- 全局处理在 `GlobalExceptionHandler`。新增异常类型时扩展这里，不要在 Controller 里捕获。
+- 禁止空 `catch`、`e.printStackTrace()`、循环里吞异常继续执行、用异常做正常分支、在 `finally` 里 `return`。
+- 关闭流使用 try-with-resources。
 
 ## 六、日志
 
-- 统一使用 SLF4J：`private static final Logger log = LoggerFactory.getLogger(Xxx.class);`（或 Lombok `@Slf4j`）。禁止 `System.out.println` / `System.err`。
-- 必须用占位符 `{}`，禁止字符串拼接：`log.info("orderId={}, userId={}", orderId, userId);`
-- 级别约定：`ERROR` 仅用于需要人工介入的故障且必须带异常堆栈；`WARN` 用于可自动恢复的异常与降级；`INFO` 用于关键业务流程节点（下单、支付、退款）；`DEBUG` 用于调试细节。
-- 打异常时堆栈放最后一个参数，不拼接到 message：`log.error("处理回调失败, orderId={}", orderId, e);`
-- **禁止**输出密码、token、完整身份证号、完整手机号、银行卡号；必要字段用脱敏工具处理。
-- 每条请求链路需有 `traceId`（由 MDC 注入，`Result` 响应体中回传）。
+- 使用 Lombok `@Slf4j` 或 SLF4J。禁止 `System.out` / `System.err`。
+- 占位符：`log.info("taskId={}", taskId)`。禁止字符串拼接。
+- `ERROR` 表示需要处理的故障，且把异常对象放在最后一个参数。`WARN` 表示可预期的业务拒绝。`INFO` 表示导入开始/结束这类节点。`DEBUG` 表示校验细节。
+- 禁止打印密码、token、完整身份证号、完整手机号、银行卡号。
 
 ## 七、数据库与 MyBatis
 
-- 表必备字段：`id`（bigint 主键，雪花 ID）、`create_time`、`update_time`、`deleted`（逻辑删除，`@TableLogic`）。
-- 禁止 `SELECT *`，Mapper XML 中必须写明列或用 `<include refid="Base_Column_List"/>`。
-- 禁止在业务代码里拼接 SQL；动态条件用 `<where>` + `<if>`，模糊查询用 `CONCAT('%', #{kw}, '%')`，杜绝 `${}` 直插（除 `ORDER BY` 白名单字段）。
-- 单次查询返回量必须受限：列表接口强制分页；批量查询 `IN` 集合超过 500 必须分批。
-- **禁止在循环中查询数据库**（N+1），改为批量查一次再内存组装 Map。
-- 更新/删除必须带 `WHERE` 条件，禁止全表操作；条件字段无索引时需评审。
-- 事务：单个事务方法内 SQL 不超过 5 条，事务内禁止 RPC / HTTP / 发消息 / 睡眠等耗时操作；注意 `@Transactional` 自调用失效问题（同类内方法互调不走代理）。
+- 新表对齐现有用户表：`id bigint` 自增主键，`created`、`last_modified` 为毫秒时间戳，由 `MybatisObjectHandler` 填充。不要擅自改成雪花 ID、`create_time` 或逻辑删除字段。
+- 禁止 `SELECT *`。需要指定列时用查询构造器的 `select`，或在 XML 里列出列。
+- 禁止拼接 SQL。动态条件用 Wrapper 或 XML 的 `<where>` + `<if>`。除白名单排序外，不要使用 `${}`。
+- 列表查询必须分页或带 `limit`。`IN` 超过 500 个元素要分批。禁止在循环里逐条查库。
+- 更新和删除必须带条件，禁止全表更新。
+- 一个事务方法里不要包住整文件导入、HTTP 或睡眠。大批量写入按批提交。`@Transactional` 不要在同一个类里自调用。
+- 改表时同时给出 Flyway 脚本和文件顶部的回滚 SQL。
 
 ## 八、并发与性能
 
-- 禁止 `new Thread()`，统一使用线程池（`ThreadPoolTaskExecutor`），必须显式指定核心线程数、队列容量、拒绝策略、线程名（便于排查）。
-- 优先用 `CompletableFuture` 做并行编排，注意传递 MDC 上下文。
-- `ThreadLocal` 使用必须在 finally 中 `remove()`，线程池场景下尤其重要。
-- 缓存：Redis key 统一 `业务:模块:标识` 格式（如 `order:detail:123`），必须显式设置 TTL；缓存穿透用空值缓存或布隆过滤器，缓存雪崩加随机过期时间，热点 key 考虑本地缓存。
-- 集合操作：`CollectionUtils.isEmpty` 判空；`stream` 链式调用超过 5 个算子应拆分方法；禁止对 `null` 集合直接 `.stream()`。
+- 禁止 `new Thread()`。使用 `ThreadPoolTaskExecutor`，写明核心线程数、队列容量、拒绝策略和线程名前缀。导入线程池名使用 `UserImportExecutorNames`。
+- `ThreadLocal` 必须在 `finally` 中 `remove()`。
+- Redis key 使用 `业务:模块:标识`，并设置 TTL。
+- 集合用 `CollectionUtils.isEmpty` 判空。不要对可能为 null 的集合直接 `.stream()`。
 
 ## 九、安全
 
-- 所有非白名单接口必须经过鉴权拦截器；权限校验写在 Service 入口，不信任前端传来的 `userId`，一律从登录上下文获取。
-- SQL 注入：只允许参数绑定；越权：所有按 ID 查询的资源必须校验归属（防水平越权）。
-- 密码存储用 `BCrypt`，禁止 MD5/SHA1。
-- 上传文件校验后缀与 MIME，存储路径不可由用户控制（防路径穿越）。
-- 任何回显用户输入的地方考虑 XSS 过滤。
-- 密钥、账号、连接串一律走配置中心或环境变量，**禁止硬编码到代码或提交到仓库**。
+- 非白名单接口走 `AuthInterceptor`。标了 `@IgnorePermission` 的接口才跳过登录校验。
+- 只使用参数绑定，防止 SQL 注入。按 ID 查询的资源要校验归属。
+- 用户密码沿用 `SecureUtils` 的 AES，密钥使用现有 `Constants`。不要在无关改动里改成 BCrypt，否则已有用户无法登录。
+- 上传只接受约定后缀。临时文件名由服务端生成，不使用用户传入的路径。
+- 新增的密钥、账号、连接串不要再硬编码。不要把已有密钥打印到日志。
 
 ## 十、单元测试
 
-- 框架：JUnit 5 + Mockito + AssertJ。
-- 测试类 `XxxServiceImplTest`，方法名 `should_期望结果_when_条件`，如 `should_throwException_when_orderNotFound`。
-- Service 层单元测试不启动 Spring 容器（`@ExtendWith(MockitoExtension.class)`），用 `@Mock` / `@InjectMocks`。
-- 断言用 AssertJ（`assertThat(...).isEqualTo(...)`），禁止只有 `System.out` 无断言的「假测试」。
-- 核心业务与金额计算分支覆盖率不低于 80%；测试数据自建，禁止依赖线上数据库或真实外部服务。
+- JUnit 5 + Mockito + AssertJ。Service 测试使用 `@ExtendWith(MockitoExtension.class)`，不启动 Spring 容器。
+- 测试类名 `XxxServiceImplTest` 或与被测类对应的 `XxxTest`。方法名 `should_期望_when_条件`。
+- 断言使用 AssertJ。禁止只有日志、没有断言的测试。
+- 测试数据在用例里构造。不要连接真实数据库或外部服务。
 
 ## 十一、代码风格与提交
 
-- 缩进 4 空格，行宽 120，导入不使用通配符 `*`，删除未使用的 import。
-- 方法行数建议不超过 60 行，超过则抽私有方法；参数超过 4 个封装成对象。
-- 魔法值必须提为常量或枚举。注释解释「为什么」不复述「是什么」；公共方法写 Javadoc（`@param` / `@return` / `@throws`）。
-- 类、方法上方禁止无意义注释（`// set name`）。
-- Git 提交遵循 Conventional Commits：`feat|fix|refactor|perf|test|docs|chore(scope): 描述`。一个提交只做一件事，禁止「update code」这类无效信息。
-- 提交前必须本地通过编译与测试。
+- 缩进 4 空格，行宽 120，禁止通配符 import，删掉无用 import。
+- 方法过长就拆私有方法。超过 4 个参数时改成对象。
+- 魔法数提成常量或枚举。公共方法写 Javadoc，说明为什么，而不是复述代码。
+- 提交信息使用 `feat|fix|refactor|perf|test|docs|chore(scope): 描述`。提交前本地编译和测试要通过。
 
-## 十二、AI 生成代码时的附加要求
+## 十二、生成代码时的附加要求
 
-- 新增代码前先检查项目内是否已有同类工具类 / Assembler / 异常定义，**优先复用，不重复造轮子**。
-- 修改已有文件时保持原有风格与既有分层，不做与需求无关的大范围重构。
-- 生成的每个新类必须放在合理的既有包路径下，不新建同义包名（如 `util` 与 `utils` 并存）。
-- 涉及数据库变更时，同时给出对应的 DDL 与回滚 DDL。
-- 不确定的业务规则要显式提出，不要臆测默认值。
+- 先查找已有的 `Convert`、`ResponseCode`、`BizException`、`ResultUtils`，能复用就不要新建一套。
+- 修改时保持现有分层和 JDK 8 写法，不做与需求无关的升级或重命名。
+- 新类放进上面已有的包。`service.impl` 之外的导入辅助类进 `model` 的功能目录。
+- 数据库变更同时给出迁移 SQL 和回滚 SQL。
+- 业务规则不清楚时先说明假设，不要自行增加默认限制。

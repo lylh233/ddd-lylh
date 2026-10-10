@@ -5,6 +5,7 @@ import com.lylh.repository.biz.model.filters.UserFilter;
 import com.lylh.repository.biz.model.page.MapperPage;
 import com.lylh.repository.entity.UserDO;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -23,4 +24,12 @@ public interface MapperUserService extends IService<UserDO> {
     UserDO getByUserName(String username);
 
     List<UserDO> getByName(String name);
+
+    /**
+     * 按批查询已存在的用户名。调用方一次可能传入大量名字，实现里必须再按 500 拆开，避免超长 IN。
+     *
+     * @param usernames 待检查的用户名
+     * @return 数据库中已经存在的用户名
+     */
+    List<String> listExistingUsernames(Collection<String> usernames);
 }
