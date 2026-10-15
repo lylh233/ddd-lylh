@@ -36,7 +36,7 @@ common：异常、错误码、拦截器、工具，供各模块复用
 
 - **Controller**：只做参数接收、调用 Service、用 `ResultUtils` 返回。禁止业务判断、SQL、事务、try-catch 兜底。
 - **Service**：业务入口。接口 `XxxService` 放在 `com.lylh.biz.service`，实现 `XxxServiceImpl` 放在 `com.lylh.biz.service.impl`。`@Transactional` 只加在实现类的 public 方法上。
-- **`service.impl` 只放实现类**。该目录中每个文件都必须是某个 `XxxService` 的 `XxxServiceImpl`。监听器、校验器、行对象、批次结果、常量、线程池名称等，一律放到与 `service` 同级的 `com.lylh.biz.model` 下，按功能建子包归类。例如导入相关类放在 `com.lylh.biz.model.excel`（`UserImportRow`、`UserImportRowChecker`、`UserImportReadListener`）。`model` 不依赖 `service`；需要回调时在 `model` 中定义窄接口，由 `service.impl` 实现。
+- **`service.impl` 只放实现类**。该目录中每个文件都必须是某个 `XxxService` 的 `XxxServiceImpl`。监听器、校验器、行对象、批次结果、常量、线程池名称等，一律放到与 `service` 同级的 `com.lylh.biz.model` 下，按功能建子包归 类。例如导入相关类放在 `com.lylh.biz.model.excel`（`UserImportRow`、`UserImportRowChecker`、`UserImportReadListener`）。`model` 不依赖 `service`；需要回调时在 `model` 中定义窄接口，由 `service.impl` 实现。
 - **repository.biz**：`MapperXxxService` + `impl`，只做数据访问。禁止在这里写登录、重名等业务判断。Mapper XML 禁止超过 3 表 join。
 - **DO / DTO / VO / Query 不得混用**：
   - `XxxDO`：在 `com.lylh.repository.entity`，对应一张表。禁止作为 Controller 出入参。
